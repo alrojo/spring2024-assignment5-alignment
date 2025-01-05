@@ -7,7 +7,10 @@ from typing import Any
 import torch
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizerBase
-
+from cs336_alignment.mmlu_format import mmlu
+from cs336_alignment.gsm8k_format import gsm8k
+from cs336_alignment.sft_format import SFTDataset, iterate_batches
+from cs336_alignment.dpo import per_instance_dpo_loss
 
 def get_packed_sft_dataset(
     tokenizer: PreTrainedTokenizerBase,
@@ -36,7 +39,12 @@ def get_packed_sft_dataset(
         "input_ids" contains the token IDs for the language modeling inputs, and "labels" contains
         the token IDs for the language modeling labels.
     """
-    raise NotImplementedError
+    return SFTDataset(
+                tokenizer,
+                dataset_path,
+                seq_length,
+                shuffle
+            )
 
 
 def run_iterate_batches(
@@ -59,7 +67,8 @@ def run_iterate_batches(
     Returns:
         Iterable over batches, where each batch has size `batch_size`.
     """
-    raise NotImplementedError
+
+    return iterate_batches(dataset, batch_size, shuffle)
 
 
 def run_parse_mmlu_response(
@@ -85,7 +94,7 @@ def run_parse_mmlu_response(
         str (one of "A", "B", "C", or "D") if the model output can be parsed into a prediction,
         else None.
     """
-    raise NotImplementedError
+    return mmlu.parse_mmlu_response(model_output)
 
 
 def run_parse_gsm8k_response(
@@ -102,7 +111,7 @@ def run_parse_gsm8k_response(
         str with the predicted numeric answer if the model output can be parsed into a prediction,
         else None.
     """
-    raise NotImplementedError
+    return gsm8k.parse_gsm8k_response(model_output)
 
 
 def compute_per_instance_dpo_loss(
@@ -137,4 +146,12 @@ def compute_per_instance_dpo_loss(
     Returns:
         torch.Tensor with the DPO loss for this example.
     """
-    raise NotImplementedError
+    return per_instance_dpo_loss(
+            lm,
+            lm_ref,
+            tokenizer,
+            beta,
+            prompt,
+            response_chosen,
+            response_rejected
+        )
